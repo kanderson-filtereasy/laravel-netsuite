@@ -3,7 +3,7 @@
 class Oauth
 {
     protected $oauth_nonce, $oauth_timestamp, $oauth_signature_method, $oauth_version;
-    protected $url, $arrConfig, $strScriptId, $strMethod;
+    protected $url, $arrConfig, $strScriptId, $strMethod, $arrData;
     protected $baseString, $signatureString, $oauthSignature, $oauthHeader;
 
     /**
@@ -126,7 +126,7 @@ class Oauth
         return $this->oauthHeader;
     }
 
-    public function __construct($arrConfig, $strScriptId, $strMethod)
+    public function __construct($arrConfig, $strScriptId, $strMethod, $arrData)
     {
         $this->setOauthNonce(md5(mt_rand()));
         $this->setOauthTimestamp(time());
@@ -136,6 +136,7 @@ class Oauth
         $sigMeth = array_key_exists('signatureAlgorithm', $arrConfig) ? $arrConfig['signatureAlgorithm'] : 'HMAC-SHA256';
         $this->setOauthSignatureMethod($sigMeth);
         $this->setStrMethod($strMethod);
+        $this->arrData = $arrData;
 
         $this->setBaseString();
         $this->setSignatureString();
@@ -146,17 +147,27 @@ class Oauth
 
     public function setBaseString()
     {
+        $arr = [
+            'deploy' => 1,
+            'oauth_consumer_key' => $this->getArrConfig()['consumerKey'],
+            'oauth_nonce' => $this->getOauthNonce(),
+            'oauth_signature_method' => $this->getOauthSignatureMethod(),
+            'oauth_timestamp' => $this->getOauthTimestamp(),
+            'oauth_token' => $this->getArrConfig()['token'],
+            'oauth_version' => $this->getOauthVersion(),
+            'realm' => $this->getArrConfig()['account'],
+            'script' => $this->getStrScriptId()
+        ];
+        if ($this->getStrMethod() === 'GET') {
+            $arr = array_merge($arr, $this->arrData);
+            ksort($arr);
+            $arrOut = [];
+            foreach ($arr as $k=>$v) {
+                $arrOut[] = "$k=$v";
+            }
+        }
         $this->baseString=$this->getStrMethod()."&" . urlencode($this->getArrConfig()['host']) . "&" .
-            urlencode("deploy=1"
-                . "&oauth_consumer_key=" . $this->getArrConfig()['consumerKey']
-                . "&oauth_nonce=" . $this->getOauthNonce()
-                . "&oauth_signature_method=" . $this->getOauthSignatureMethod()
-                . "&oauth_timestamp=" . $this->getOauthTimestamp()
-                . "&oauth_token=" . $this->getArrConfig()['token']
-                . "&oauth_version=" . $this->getOauthVersion()
-                . "&realm=" . $this->getArrConfig()['account']
-                . "&script=" . $this->getStrScriptId()
-            );
+            urlencode(implode('&', $arrOut));
     }
 
     public function setSignatureString()
