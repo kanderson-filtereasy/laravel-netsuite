@@ -158,17 +158,17 @@ class Oauth
             'realm' => $this->getArrConfig()['account'],
             'script' => $this->getStrScriptId()
         ];
-        $this->getStrMethod()."&" . urlencode($this->getArrConfig()['host']);
         if ($this->getStrMethod() === 'GET') {
             $arr = array_merge($arr, $this->arrData);
             ksort($arr);
-            $arrOut = [];
-            foreach ($arr as $k=>$v) {
-                $arrOut[] = "$k=$v";
-            }
-            $this->baseString=$this->baseString . "&" .
-                urlencode(implode('&', $arrOut));
         }
+        $arrOut = [];
+        foreach ($arr as $k=>$v) {
+            $arrOut[] = "$k=$v";
+        }
+
+        $this->baseString=$this->getStrMethod()."&" . urlencode($this->getArrConfig()['host']) . "&" .
+            urlencode(implode('&', $arrOut));
     }
 
     public function setSignatureString()
