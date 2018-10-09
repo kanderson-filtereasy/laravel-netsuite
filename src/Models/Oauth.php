@@ -164,7 +164,7 @@ class Oauth
         }
         $arrOut = [];
         foreach ($arr as $k=>$v) {
-            $arrOut[] = "$k=$v";
+            $arrOut[] = urlencode($k) . "=" . urlencode($v);
         }
 
         $this->baseString=$this->getStrMethod()."&" . urlencode($this->getArrConfig()['host']) . "&" .
